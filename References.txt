@@ -1,0 +1,5 @@
+http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
+https://stackoverflow.com/questions/40509217/how-to-have-r-corrplot-title-position-correct
+http://data.princeton.edu/R/linearModels.html
+https://www.statmethods.net/stats/regression.html
+http://blog.yhat.com/posts/r-lm-summary.html

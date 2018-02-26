@@ -1,0 +1,857 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+White Wine Quality by Abbas A. Alali
+========================================================
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+#install.packages("corrplot", dependencies=TRUE, repos='http://cran.rstudio.com/')
+suppressMessages(library(ggplot2))
+suppressMessages(library(gridExtra))
+suppressMessages(library(corrplot))
+suppressMessages(library(memisc))
+suppressMessages(library(RColorBrewer))
+```
+
+> The dataset that i will be using in this exploratory data analysis process\
+>is the White Wine dataset which is public available for research. 
+>
+>The details are described in [Cortez et al., 2009].
+>
+>     P. Cortez, A. Cerdeira, F. Almeida, T. Matos and J. Reis. Modeling wine\
+>     preferences by data mining from physicochemical properties. \
+>     In Decision Support Systems, Elsevier,47(4):547-553. ISSN: 0167-9236.
+>
+>     Available at: 
+>
+>     [@Elsevier](http://dx.doi.org/10.1016/j.dss.2009.05.016)
+>                
+>     [Pre-press (pdf)](http://www3.dsi.uminho.pt/pcortez/winequality09.pdf)
+>                
+>     [bib](http://www3.dsi.uminho.pt/pcortez/dss09.bib)
+>
+> The dataset used has been downloaded from [this link](https://www.google.com/url?q=https://s3.amazonaws.com/udacity-hosted-down\
+loads/ud651/wineQualityWhites.csv&sa=D&ust=1518211607164000&usg=AFQjCNGqcmTIF2\
+an-RHraAjbtMBpAhsdTg)
+
+
+
+```{r message=F, warning=F}
+# Load the Data
+
+setwd("C:/Users/Abbas/Documents/DAND/Term 2/Project 2")
+wdf = read.csv('wineQualityWhites.csv')
+
+```
+
+
+
+# Univariate Plots Section
+
+
+##***Preliminary Exploration:***
+
+```{r message=F, warning=F}
+
+dim(wdf)
+
+str(wdf)
+
+summary(wdf)
+
+```
+
+
+###***Quality:***
+
+**The quality of wine varies from 3 to 9 in our dataset. There are no 0 or 10 \
+rated wine in the dataset, the minimum rated wine is 3 and the maximum is 9.\
+The median quality is 6**
+
+```{r message=F, warning=F}
+
+table(wdf$quality) # get the rating levels
+
+summary(wdf$quality) # summary of rating
+
+wdf$quality.rating = factor(wdf$quality) # store factors into quality.rating variable
+
+
+ggplot(aes(x = quality.rating), data = wdf) + 
+  geom_histogram(stat = "count", fill =I('#2c7fb8')) + # bar polt of quality.rating
+  ggtitle("Count of Wine Quality by Rating") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Quality Rating') +
+  ylab('Count')
+
+```
+
+
+**From the summary of the ratings and the plot above, we can see that there are\
+very few wine records that are rated as 3 or 9 (25 records out of the \
+whole dataset).These records might be excluded from future analysis and plots \
+as they will be outliers.**
+
+**Also, a new variable has been created to bucket the rating as Low(3-4), \
+Medium(5-7), high(8-9)**
+
+```{r ,message=F, warning=F}
+
+wdf$rating <- cut(wdf$quality, breaks=c(2,4,7,9), labels=c("Low","Medium","High")) #create a bucketed bins of quality
+  # 3-4 --> Low
+  # 5-7 --> Medium
+  # 8-9 --> High
+
+```
+
+###***Fixed Acidity:***
+
+```{r message=F, warning=F}
+
+summary(wdf$fixed.acidity) # summary of fixed acidity
+
+bplot = ggplot(aes(x = fixed.acidity), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of fixed.acidity
+  ggtitle("Count of Wine by Fixed Acidity Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Fixed Acidity') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = fixed.acidity), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of fixed.acidity
+  scale_x_continuous( limit = c(4,9), breaks = seq(4, 9, by = 0.5) ) +
+  ggtitle("Count of Wine by Fixed Acidity Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Fixed Acidity') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The fixed acidity plot looks normally distributed with mean value of (6.855).\
+After several adjustments to the x-axis scale, most of the wines are ranged from\
+5.5 to 8.5 fixed acidity level**
+
+###***Volatile Acidity:***
+
+```{r message=F, warning=F}
+
+summary(wdf$volatile.acidity) # summary of volatile acidity
+
+bplot = ggplot(aes(x = volatile.acidity), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of volatile.acidity
+  ggtitle("Count of Wine by Volatile Acidity Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Volatile Acidity') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = volatile.acidity), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of volatile.acidity
+  scale_x_continuous( limit= c(0.1, 0.5), breaks = seq(0.1, 0.5, by = 0.05) ) + 
+  ggtitle("Count of Wine by Volatile Acidity Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Volatile Acidity') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**With the basic plot of the volatile acidity levels, I can see that most of \
+the wine records is ranged from 0.08 to 1.1 acidity levels with (0.2782) \
+mean value . After several adjustments to the x-axis scale, most of the wines\
+are ranged from 0.15 to 0.40 volatile acidity level**
+
+
+###***Citric Acid:***
+
+```{r message=F, warning=F}
+
+summary(wdf$citric.acid) # summary of citric acid attribute
+
+bplot = ggplot(aes(x = citric.acid), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of citric acid
+  ggtitle("Count of Wine by Citric Acid Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Citric Acid') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = citric.acid), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of Citric Acid
+  scale_x_continuous( limit = c(0, 0.6), breaks = seq(0, 0.6, by = 0.05) ) + 
+  ggtitle("Count of Wine by Citric Acid Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Citric Acid') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the citric acidity shows that the wine records is ranged\
+from 0 to 1.6 acidity levels with mean value of (0.3342). After several\
+adjustments to the x-axis scale, most of the wines are ranged from 0.15 to 0.50\
+citric acidity level**
+
+###***Residual Sugar:***
+
+```{r message=F, warning=F}
+
+summary(wdf$residual.sugar) # summary of residual sugar attribute
+
+bplot = ggplot(aes(x = residual.sugar), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 0.1) + # bar polt of residual.sugar
+  ggtitle("Count of Wine by Residual Sugar Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Residual Sugar') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = residual.sugar), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 0.1) + # bar polt of residual.sugar
+  scale_x_continuous( limit = c(0, 20), breaks = seq(0, 20, by = 1) ) + 
+  ggtitle("Count of Wine by Residual Sugar Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Residual Sugar') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the residual sugar shows that the wine records is ranged \
+from 0.6 to 65.8 residual sugar levels (which is considered to be a very wide range)\
+with mean value of (6.391). After several adjustments to the x-axis scale, \
+most of the wines are ranged from 0.5 to 20 residual sugar level**
+
+
+###***Chlorides:***
+
+```{r message=F, warning=F}
+
+summary(wdf$chlorides) # summary of residual sugar attribute
+
+bplot = ggplot(aes(x = chlorides), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of chlorides
+  ggtitle("Count of Wine by Chlorides Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Chlorides') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = chlorides), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of chlorides
+  scale_x_continuous(limit = c(0, 0.08), breaks = seq(0, 0.08, by = 0.01)) + 
+  ggtitle("Count of Wine by Chlorides Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Chlorides') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the chlorides shows that the wine records is ranged \
+from 0 to 0.346 chlorides levels with mean value of (0.04577). After several \
+adjustments to the x-axis scale, most of the wines are ranged \
+from 0.025 to 0.065 chlorides level**
+
+###***Free Sulfur Dioxide:***
+
+```{r message=F, warning=F}
+
+summary(wdf$free.sulfur.dioxide) # summary of free.sulfur.dioxide attribute
+
+bplot = ggplot(aes(x = free.sulfur.dioxide), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 1) + # bar polt of free.sulfur.dioxide
+  ggtitle("Count of Wine by Free Sulfur Dioxide Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Free Sulfur Dioxide') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = free.sulfur.dioxide), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of free.sulfur.dioxide
+  scale_x_continuous(limit = c(0, 70), breaks = seq(0, 70, by = 5)) + 
+  ggtitle("Count of Wine by Free Sulfur Dioxide Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Free Sulfur Dioxide') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the free sulfur dioxide shows that the wine records is\
+ranged from 2 to 289 free sulfur dioxide levels with mean value of (35.31). \
+After several adjustments to the x-axis scale, most of the wines are ranged\
+from 10 to 60 free sulfur dioxide level**
+
+###***Total Sulfur Dioxide:***
+
+```{r message=F, warning=F}
+
+summary(wdf$total.sulfur.dioxide) # summary of free.sulfur.dioxide attribute
+
+bplot = ggplot(aes(x = total.sulfur.dioxide), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 1) + # bar polt of total.sulfur.dioxide
+  ggtitle("Count of Wine by Total Sulfur Dioxide Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Total Sulfur Dioxide') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = total.sulfur.dioxide), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'),width = 1) + # bar polt of total.sulfur.dioxide
+  scale_x_continuous(limit = c(50, 240), breaks = seq(50, 250, by = 10)) + 
+  ggtitle("Count of Wine by Total Sulfur Dioxide Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Total Sulfur Dioxide') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the total sulfur dioxide shows that the wine records is \
+ranged from 9 to 440 total sulfur dioxide levels (which is considered to be\
+a very wide range) with mean value of (138.4). After several adjustments to \
+the x-axis scale, most of the wines are ranged from 60 to 220 total sulfur \
+dioxide level**
+
+###***Density:***
+
+```{r message=F, warning=F}
+
+summary(wdf$density) # summary of density
+
+bplot = ggplot(aes(x = density), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 0.001) + # bar polt of density
+  ggtitle("Count of Wine by Density Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Density') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = density), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 0.0001) + # bar polt of density
+  scale_x_continuous(limit = c(0.99, 1.0), breaks = seq(0.99, 1.0, by = 0.0025)) + 
+  ggtitle("Count of Wine by Density Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Density') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the density shows that the wine records is ranged \
+from 0.98 to 1.039 density levels with mean value of (0.9940). After several \
+adjustments to the x-axis scale, most of the wines are ranged \
+from 0.9910 to 0.9980 density level**
+
+###***PH:***
+
+```{r message=F, warning=F}
+
+summary(wdf$pH) # summary of density
+
+bplot = ggplot(aes(x = pH), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of PH
+  ggtitle("Count of Wine by PH Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('PH') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = pH), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of PH
+  scale_x_continuous(limit = c(2.8, 3.6), breaks = seq(2.8, 3.6, by = 0.05)) + 
+  ggtitle("Count of Wine by PH Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('PH') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the PH shows that the wine records is ranged \
+from 2.72 to 3.82 density levels with mean value of (3.188). After several\
+adjustments to the x-axis scale, most of the wines are ranged \
+from 2.9 to 3.45 PH level**
+
+###***Sulphates:***
+
+```{r message=F, warning=F}
+
+summary(wdf$sulphates) # summary of Sulphates
+
+bplot = ggplot(aes(x = sulphates), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of sulphates
+  ggtitle("Count of Wine by Sulphates Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Sulphates') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = sulphates), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8')) + # bar polt of sulphates
+  scale_x_continuous(limit = c(0.25, 0.85), breaks = seq(0.25, 0.75, by = 0.05)) + 
+  ggtitle("Count of Wine by Sulphates Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Sulphates') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the Sulphates shows that the wine records is ranged \
+from 0.22 to 1.08 density levels with mean value of (0.4898). After several \
+adjustments to the x-axis scale, most of the wines are ranged \
+from 0.30 to 0.70 Sulphates level**
+
+###***Alcohol:***
+
+```{r message=F, warning=F}
+
+summary(wdf$alcohol) # summary of alcohol
+
+bplot = ggplot(aes(x = alcohol), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'), width = 0.1) + # bar polt of alcohol
+  ggtitle("Count of Wine by Alcohol Levels (Basic Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Alcohol') +
+  ylab('Count')
+
+rplot = ggplot(aes(x = alcohol), data = wdf) + 
+  geom_bar(stat = "count", fill =I('#2c7fb8'),width = 0.1) + # bar polt of alcohol
+  scale_x_continuous(limit = c(8.5, 12.0), breaks = seq(8.0, 14, by = 0.25)) + 
+  ggtitle("Count of Wine by Alcohol Levels (Revised Plot)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Alcohol') +
+  ylab('Count')
+
+grid.arrange(bplot, rplot)
+
+```
+
+**The basic plot of the Alcohol shows that the wine records is ranged \
+from 8 to 14.20 alcohol levels with mean value of (10.51). After several \
+adjustments to the x-axis scale, most of the wines are ranged \
+from 8.6 to 11.8 alcohol level**
+
+
+# Univariate Analysis
+
+***
+
+### What is the structure of your dataset?
+
+**The dataset explored contains (4898) white wine quality records of 13 variables for each record**
+
+***
+
+### Description of dataset attributes: 
+
+***
+
+Attribute Number| Attribute| Description 
+----|-------------|----------------------------------------------------------------- 
+1|X|Record number in the dataset        
+2| fixed acidity| Most acids involved with wine or fixed or nonvolatile \
+(do not evaporate readily)
+3| volatile acidity|  The amount of acetic acid in wine, which at too high of \
+levels can lead to an unpleasant, vinegar taste
+4| citric acid        | Found in small quantities, citric acid can add \
+'freshness' and flavor to wines
+5| residual sugar    | The amount of sugar remaining after fermentation stops,\
+it's rare to find wines with less than 1 gram/liter and wines with greater than\
+45 grams/liter are considered sweet
+6| chlorides        | The amount of salt in the wine
+7| free sulfur dioxide | The free form of SO2 exists in equilibrium between \
+molecular SO2 (as a dissolved gas) and bisulfite ion; it prevents microbial \
+growth and the oxidation of wine
+8|  total sulfur dioxide| Amount of free and bound forms of S02; in low\
+concentrations, SO2 is mostly undetectable in wine, but at free SO2 \
+concentrations over 50 ppm, SO2 becomes evident in the nose and taste of wine
+9| Density |The density of water is close to that of water depending on the \
+percent alcohol and sugar content
+10| pH | Describes how acidic or basic a wine is on a scale from 0 \
+(very acidic) to 14 (very basic); most wines are between 3-4 on the pH scale
+11| sulphates | A wine additive which can contribute to sulfur dioxide gas \
+(S02) levels, wich acts as an antimicrobial and antioxidant
+12| alcohol | The percent alcohol content of the wine
+13| quality | (score between 0 and 10)
+
+***
+
+### What is/are the main feature(s) of interest in your dataset?
+
+**The main feature in the dataset that i think will help supporting my \
+investigation is Quality:**
+
+**The quality in our dataset is the score given to record of wine (0 - 10)\
+where 0 is very bad and 10 is very excellent. It is the main feature of \
+investigation since the rating has been given by at least 3 wine experts**
+
+***
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+
+**Other features of investigations will the characterstics of wine compared\
+with qualilty which are:**
+
+**Feature**|**Comment**
+-------------|-----------------------------------------------------------------
+**Residual Sugar**|Residual sugar determines how sweet the wine is. It will \
+be a good investigation area to see what residual sugar levels are rated as \
+high quality
+**Volatile Acidity**|I assume that the amount of acetic acid is a good quality\
+indicator which is subject to investigation.
+**PH**|Acidity levels can also be a good quality indicator, here in our dataset\
+the pH levels scales from 0 (very acidic) to 14 (very basic)
+**Alcohol**|Since wine is alcoholic beverage, the % of alcohol will be a good\
+quality indicator as well
+***
+ 
+
+### Did you create any new variables from existing variables in the dataset?
+
+**Yes I did create (2) new variables to store the rating levels into \
+(quality.rating).The other new variable is (rating) to categorize ratings\
+as High[8-9], Meduim[5-7], and Low[3-4].**
+
+***
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+
+**The residual sugar and total sulfur dioxide looked unsual which had a very \
+wide range of distribution. Both plots were adjusted to show the majorirty of \
+data distribution of each feature. The reason to perform such adjustement is to\
+exclude outliers from the plots.**
+
+***
+
+# Bivariate Plots Section
+
+
+```{r, message=F, warning=F, fig.width=10, fig.height=10,Bivariate_Plots}
+
+
+#tmpdata <- wdf[ , !names(wdf) %in% c('X')]  # exlcuding the ID column (X) from the dataset
+
+tmpdata <- subset(wdf, select = -c(X,quality.rating,rating)) # exlcuding the columns (X, quality.rating, and rating) from the dataset
+
+#summary(tmpdata)
+
+corrwdf <- subset(tmpdata, quality > 3 & quality <9) #excluding the ouliers (25 entries)
+
+cor(corrwdf)
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+correlate = cor(corrwdf)
+corrplot(correlate, method="color", col=col(200),  
+         diag=FALSE, 
+         type="upper", order="hclust", 
+         title="Correlation Matrix", 
+         addCoef.col = "black", # Add coefficient of correlation
+         insig = "blank", 
+         number.cex = 1.5,
+         tl.cex = 1.5,
+         mar=c(0,0,1,0))
+
+```
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. How did the feature(s) of interest vary with other features in \
+the dataset?
+
+**My main feature of interest is the quality and from the correlation plot \
+matrix, the only noticable positive correlcation between quality and other \
+features is alcohol vs quality relationship. There is a positive correlation \
+of 0.44 between quality and alcohol, which means that the more alcohol the \
+better quality of wine.**
+
+
+### Did you observe any interesting relationships between the other features \
+(not the main feature(s) of interest)?
+
+**From the correlation plot matrix, I can see that there is a very strong \
+positive correlation of 0.84 betwen density and residual sugar. On the other\
+hand, there is negative correlation of 0.78 between density and alcohol.**
+
+### What was the strongest relationship you found?
+
+**The strongest relationship between the features of white wine is found \
+between density and residual sugar. The correlation between the two features \
+is +0.84.**
+
+
+# Multivariate Plots Section
+
+###***Alcohol VS. Quality (Main Feature of Interest)***
+
+```{r message=F, warning=F, Multivariate_Plots}
+
+# Main feature of intereset plot
+
+ggplot( aes( x= quality.rating, y = alcohol), data = subset(wdf, quality > 3 & quality <9)) + 
+  geom_boxplot(alpha = 1)  +
+  ggtitle("White Wine Quality by Alcohol Level") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Quality Rating') +
+  ylab('Alcohol')
+
+
+
+```
+
+
+###***Density VS. Residual Sugar (Other features of Interests)***
+
+```{r message=F, warning=F}
+
+# other features of interest plots
+
+ggplot( aes( x= residual.sugar, y = density), data = subset(wdf, quality > 3 & quality <9)) + 
+  geom_jitter(aes(color = rating), alpha = 1, size = 2) + 
+  scale_color_brewer(type = 'div', palette = 4) +
+  coord_cartesian(xlim = c(0, quantile(wdf$residual.sugar, 0.99)), 
+                  ylim = c(quantile(wdf$density, 0.0001), quantile(wdf$density, 0.99))) +
+  geom_smooth(method = lm,color = "black") +
+  ggtitle("Density VS. Residual Sugar") + 
+  theme(plot.title = element_text(hjust = 0.5),panel.background = element_rect(fill = 'wheat')) + # set title to be at center
+  xlab('Residual Sugar') +
+  ylab('Density')
+
+```
+
+###***Density VS. Alcohol (Other features of Interests)***
+
+```{r message=F, warning=F}
+
+# other features of interest plots
+
+ggplot( aes( x= alcohol, y = density), data = subset(wdf, quality > 3 & quality <9)) + 
+  geom_jitter(aes(color = rating), alpha = 1, size = 2) + 
+  scale_color_brewer(type = 'div', palette = 4) +
+  coord_cartesian(xlim = c(quantile(wdf$alcohol, 0.0001), 
+                           quantile(wdf$alcohol, 0.99)), 
+                  ylim = c(quantile(wdf$density, 0.0001), 
+                           quantile(wdf$density, 0.99))) +
+  geom_smooth(method = lm, color = "black") +
+  ggtitle("Density VS. Alcohol") + 
+  theme(plot.title = element_text(hjust = 0.5),panel.background = element_rect(fill = 'wheat')) + # set title to be at center
+  xlab('Alcohol') +
+  ylab('Density')
+
+```
+
+###***Linear Model Regression***
+
+```{r  message=F, warning=F}
+
+fit = lm(quality ~ alcohol + residual.sugar + density, data = wdf )
+summary(fit)
+
+```
+
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the \
+investigation. Were there features that strengthened each other in terms of \
+looking at your feature(s) of interest?
+
+
+**From the plot "White Wine Quality by Alcohol Level", I can see that the \
+quality of wine gets better with alcohol level greater than 9.5 (for 5+ rating)**
+
+
+
+
+
+### Were there any interesting or surprising interactions between features?
+
+
+**Another area of interest was to see the relationship between density and \
+residual sugar since there is a strong positive correlation between the \
+two features.**
+
+**From the plot "Density VS. Residual Sugar", there is a linear relationship\
+between the density and residual sugar. The higher the density, there is higher \
+sugar exist in white wine.**
+
+**However, I have noticed a very intersting insight from the same plot which \
+is that most of the high quality of wine has less density and hense\
+less residual sugar.**
+
+**As for the plot "Density VS. Alcohol", it is very clear that higher alcohol \
+levels are associated with lower density levels.**
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the \
+strengths and limitations of your model.
+
+**Yes I did create a linear regression model to predict the quality of wine \
+with multiple variables (alcohol, residual sugar, and density)**
+
+**The R-squared value generated by the model is 0.21. This means that \
+about 21% of wine quality is due to the levels of alcohol, residual sugar, \
+and density. The generated model is weak and indicates that there are other\
+factors that affect the quality of wine other than the 3 features \
+tested in the model.**
+
+
+------
+
+# Final Plots and Summary
+
+
+### Plot One
+```{r echo=FALSE,fig.width=10, fig.height=5, Plot_One}
+
+ggplot(aes(x = quality.rating), data = wdf) + 
+  stat_count(width = 0.8, fill =I('#2c7fb8')) +
+  facet_wrap(~rating, scales = "free" ) +
+  ggtitle("Count of Wine Quality by Rating") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Quality (0-10)') +
+  ylab('Count')
+
+
+```
+
+### Description One
+
+**The bar plot of quality shows that most of the quality is distributed in \
+the Medium range (5-7 rating) while there are few observations that are \
+rated as low or high.**
+
+### Plot Two
+```{r echo=FALSE, fig.width=10, fig.height=5, Plot_Two}
+
+#corrplot(correlate, method="color", col=brewer.pal(n = 8, name = "PuOr"),  
+#     diag=FALSE, 
+#         type="upper", order="hclust", 
+#         title="Correlation Matrix", 
+#         addCoef.col = "black", # Add coefficient of correlation
+#         insig = "blank", 
+#         number.cex = 1.5,
+#         tl.cex = 1.5,
+#         mar=c(0,0,1,0))
+
+ggplot( aes( x= quality.rating, y = alcohol,fill=rating), data = wdf) + 
+  geom_boxplot(alpha=0.3)  +
+  facet_wrap(~rating, scales = "free") +
+  scale_fill_brewer(palette="Dark2") +
+  ggtitle("White Wine Quality by Alcohol (% by volume)") + 
+  theme(plot.title = element_text(hjust = 0.5)) + # set title to be at center
+  xlab('Quality Rating (0-10)') +
+  ylab('Alcohol (% by volume)')
+
+
+
+```
+
+### Description Two
+
+**Looking at the main feature of interest (Quality) correlation with Alcohol,\
+The plot shows that the ratings of wine is higher for higher alcohol level.\
+The plot also explains the positive correlation of 0.44 between quality and\
+alcohol**
+
+### Plot Three
+```{r echo=FALSE, fig.width=10, fig.height=8, Plot_Three}
+
+ggplot( aes( x= residual.sugar, y = density), data = subset(wdf, quality > 3 & quality <9)) + 
+  geom_jitter(aes(color = rating), alpha = 1, size = 2) + 
+  scale_color_brewer(type = 'div', palette = 4) +
+  coord_cartesian(xlim = c(0, quantile(wdf$residual.sugar, 0.99)), 
+                  ylim = c(quantile(wdf$density, 0.0001), quantile(wdf$density, 0.99))) +
+  geom_smooth(method = lm,color = "black") +
+  ggtitle("Density VS. Residual Sugar") + 
+  theme(plot.title = element_text(hjust = 0.5),panel.background = element_rect(fill = 'wheat')) + # set title to be at center
+  xlab('Residual Sugar (g / dm^3)') +
+  ylab('Density (g / cm^3)')
+
+```
+
+### Description Three
+
+**The "Density VS. Residual Sugar" plot shows that there is a linear \
+relationship between the density and residual sugar, which explains the \
+strength of correlation factor between the two features (+0.84). The higher \
+the density, the higher residual sugar exist in white wine.**
+
+**In addition, a very intersting insight from the same plot that is most of\
+the high quality of wine has less density and hense less residual sugar which \
+means that sweetness in wine is not of a good quality feature.**
+
+------
+
+# Reflection
+
+>**In this project, I have experienced the exploratory data analysis process \
+by exploring the White Wine dataset which consist of 4898 observations\
+and 13 variables.**
+>
+>**Exploration Findings:**
+>
+>>**The quality of wine varies from 3 to 9 in our dataset. There are no 0 or 10\
+rated wine in the dataset, the minimum rated wine is 3 and the maximum is 9.\
+The median quality is 6 and there are very few wine records that are rated as\
+3 or 9 (25 records out of the whole dataset).**
+>
+>>**Most of the quality is distributed in the Medium range (5-7 rating) while \
+there are few observations that are rated as low or high.**
+>
+>>**The most strong (postivie) correlation is between Density and Residual \
+Sugar with a correlation of 0.84 while the most strong (negative) correlation is\
+between Density and Alcohol with a correlation of 0.78.**
+>
+>>**Looking at the main feature of interest (Quality) correlation with other \
+features, the most strong correlation relationship is with Alcohol which has a \
+correlation of 0.44.**
+>
+>>**The R-squared value generated by the model is 0.21. This means that about \
+21% of wine quality is due to the levels of alcohol, residual sugar, and \
+density. The generated model is weak and indicates that there are other factors\
+that affect the quality of wine other than the 3 features tested in the model.**
+>
+>**It was surprizing that the high quality of wine has less residual sugar which\
+means that sweetness in wine is not of a good quality feature although I was \
+thinking that the sweeter the better.**
+>
+>**I have learned a lot in this experience of exploration about visualising and\
+summarizing data using R. I have also learned that right plot scaling makes huge\
+differences when interpreting plots and summarizing findings although I did\
+strugle at the begining when it comes to finding the right scales and getting\
+the plots to show what I intended to.**
+>
+>**I think a future work to this dataset can be adding another feature that has\
+a strong correlation with quality other than Alcohol which is the only \
+correlatable feature (with quality) in this dataset. This would provide a\
+deeper experience with correlation and coming up with more findings.**
+
+>**Below References were very useful throughout the project work**
+>
+>[1- Visualize Correlation](http://www.sthda.com/english/wiki/visualize-corre\
+lation-matrix-using-correlogram)
+>
+>[2- Corrplot Tilte Position](https://stackoverflow.com/questions/40509217/how-\
+to-have-r-corrplot-title-position-correct)
+>
+>[3- Linear Models in R](http://data.princeton.edu/R/linearModels.html)
+>
+>[4- Regression](https://www.statmethods.net/stats/regression.html)
+>
+>[5- Linear Modeling in R](http://blog.yhat.com/posts/r-lm-summary.html)
